@@ -47,6 +47,6 @@ let inline (<!>) f x = Result.map f x
 let validateCreditCard (creditCard: CreditCard): Result<CreditCard, string> =
   createCreditCard
   <!> validateNumber creditCard.Number
-  <*> apply (validateExpiry creditCard.Expiry)
-  <*> apply (validateCvv creditCard.Cvv)
+  |> apply (validateExpiry creditCard.Expiry)
+  |> apply (validateCvv creditCard.Cvv)
 
