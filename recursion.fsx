@@ -29,21 +29,23 @@ type 'a Tree =
   | Leaf of 'a
   | Node of 'a Tree * 'a Tree
 
-let testTree = Node(
-  Node(Leaf(3), Leaf(1)),
-  Node(Leaf(4), Node(Leaf(1), Leaf(5)))
-)
 
-let rec map f tree =
+let rec mapv f tree =
   match tree with
   | Leaf x -> f x |> Leaf
   | Node (left, right ) ->
-      let leftResult = map f left
-      let rightResult = map f right
+      let leftResult = mapv f left
+      let rightResult = mapv f right
       Node(leftResult, rightResult)
+      
+
+let testTree = Node(
+  Node(Leaf(1), Leaf(2)),
+  Leaf(3))
 
 let mapTree f tree =
   let rec mapInner tree continuation =
+    printfn "Mapping tree %A" tree
     match tree with
     | Leaf x -> 
         Leaf(f x) |> continuation
@@ -52,3 +54,4 @@ let mapTree f tree =
           mapInner right (fun rightResult ->
             Node(leftResult, rightResult) |> continuation))
   mapInner tree id
+

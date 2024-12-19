@@ -98,11 +98,11 @@ let rec map f lst =
 これを末尾呼び出し最適化と呼ぶ。
 
 ---
-# 末尾再帰でmapを実装する
+# アキュムレータを用いて末尾再帰でmapを実装する
 
 mapの中に補助関数として再帰関数を定義し、引数でアキュムレータを受け取れるようにする。
 空のリストを受け取った場合は、アキュムレータを返すようにする。
-それ以外のリストの場合はfにheadを適用した値をアキュムレータに格納していく。
+それ以外のリストの場合はfにheadを適用した値をアキュムレータに累積していく。
 
 ```fsharp
 let map f lst =
@@ -119,7 +119,7 @@ let map f lst =
 
 ---
 
-# 木構造におけるmap
+# 木構造の場合
 このような木構造があるとする
 
 ```fsharp
@@ -131,7 +131,8 @@ type 'a Tree =
 ---
 # 木構造におけるmap
 リストと同じような形でmapを書くとこうなる。
-以下のmapは再帰関数を複数呼び出す場合はアキュムレータを使ってもうまくいかない。
+この複数再帰呼び出しをする場合、アキュムレータを使ってもうまくいかず、
+このコードは末尾再帰になっていない。
 ```fsharp
 let rec map f tree =
   match tree with
@@ -145,6 +146,7 @@ let rec map f tree =
 
 # そんなときに継続渡しスタイル(CPS)
 「次に何をするか」という関数を再帰呼び出しの引数に渡していく。
+これは末尾再帰になっていて、スタックにはプッシュ追加されない。
 ```fsharp
 let map f tree =
   let rec mapInner tree continuation =
@@ -158,9 +160,84 @@ let map f tree =
             Node(leftResult, rightResult) |> continuation))
 ```
 ---
-# その他の再帰的なデータ構造
+単純な木構造`Node (Leaf 1, Leaf 2)`でなにが起こっているのかを紐解いていく。
+```fsharp
+let map f tree =
+  let rec mapInner tree continuation =
+    printfn "tree: %A" tree
+    match tree with
+    | Leaf x -> 
+        Leaf(f x) |> continuation
+    | Node (left, right) ->
+        mapInner left (fun leftResult ->
+          mapInner right (fun rightResult ->
+            Node(leftResult, rightResult) |> continuation))
+  mapInner tree id
+```
+```shell
+> mapTree (fun x -> x * 2) (Node (Leaf 1, Leaf 2));;  
+tree: Node (Leaf 1, Leaf 2)
+tree: Leaf 1
+tree: Leaf 2
+val it: int Tree = Node (Leaf 2, Leaf 4)
+```
+---
+初回はnodeなので以下のパターンに入る。
+```fsharp
+| Node (left, right) ->
+        mapInner left (fun leftResult ->
+          mapInner right (fun rightResult ->
+            Node(leftResult, rightResult) |> continuation))
+```
+![h:400](./images/個人メモ%20(3).png)
 
 ---
 
+2回目の再帰呼び出しはLeafなのでこのパターンに入る。
+引数で受け取った関数を適用してその結果でcontinuationを呼び出す。
+
+```fsharp
+| Leaf x -> 
+        Leaf(f x) |> continuation
+```
+
+![h:400](./images/nikaimeno.png)
+
+---
+
+![h:400](./images/last.png)
+
+---
+
+このように継続を表す関数に「次に何をするか」を蓄積していくスタイルのことを継続渡しスタイル(CPS: Continuation Passing Style)と呼ぶ。
+これは末尾再帰になっていて、スタックには追加されない。
+
+```fsharp
+let map f tree =
+  let rec mapInner tree continuation =
+    printfn "tree: %A" tree
+    match tree with
+    | Leaf x -> 
+        Leaf(f x) |> continuation
+    | Node (left, right) ->
+        mapInner left (fun leftResult ->
+          mapInner right (fun rightResult ->
+            Node(leftResult, rightResult) |> continuation))
+  mapInner tree id
+```
+---
+
+# その他の再帰的な構造
+他にも再帰的な構造はたくさんある。
+それらに対しても再帰が有効である。
+
+- ファイルシステム
+- 業界
+  - 大分類 > 中分類 > 小分類
+- 組織図
+- 世界の国
+  - アジア > 東アジア > 日本
+---
+
 # まとめ
-本日紹介したテクニックなどを用いて再帰を使いこなしていこう
+本日紹介したテクニックなどを用いて再帰を使いこなして、関数プログラミングを楽しもう
