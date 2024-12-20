@@ -155,8 +155,8 @@ let map f tree =
     | Node (left, right) ->
         mapInner left (fun leftResult ->
           mapInner right (fun rightResult ->
-  mapInner tree id
             Node(leftResult, rightResult) |> continuation))
+  mapInner tree id
 ```
 ---
 単純な木構造`Node (Leaf 1, Leaf 2)`でなにが起こっているのかを紐解いていく。
