@@ -33,10 +33,9 @@ static long Factorial(int n)
 ```
 
 ---
-対して関数型言語では基本的に一度、作ったデータは変わることがなく、未来永劫その値を持ち続ける
+対して関数型言語では基本的に一度、作ったデータは変わることがなく、未来永劫その値を持ち続ける。
 
-関数プログラミングではこのような参照透過性を持つため、ループ構文ではなく再帰で問題を解決する。
-ローカル変数の代入を関数の引数の初期化で置き換えることができる。
+このような不変性を備えた関数プログラミングでは、副作用を伴わない関数呼び出しが可能になり、繰り返し処理もループ構文ではなく再帰によって表現することが一般的。
 
 ```fsharp
 let rec factorial n =
@@ -106,11 +105,11 @@ mapの中に補助関数として再帰関数を定義し、引数でアキュ�
 
 ```fsharp
 let map f lst =
-  let rec mapInner f lst acc =
+  let rec mapInner lst acc =
     match lst with
     | [] -> acc
-    | head::rest -> mapInner f rest ((f head) :: acc)
-  mapInner f lst [] |> List.rev
+    | head::rest -> mapInner rest ((f head) :: acc)
+  mapInner lst [] |> List.rev
 ```
 ---
 # やったか?..
@@ -189,7 +188,7 @@ val it: int Tree = Node (Leaf 2, Leaf 4)
           mapInner right (fun rightResult ->
             Node(leftResult, rightResult) |> continuation))
 ```
-![h:400](./images/個人メモ%20(3).png)
+![h:400](./images/first.png)
 
 ---
 
@@ -201,16 +200,21 @@ val it: int Tree = Node (Leaf 2, Leaf 4)
         Leaf(f x) |> continuation
 ```
 
-![h:400](./images/nikaimeno.png)
+![h:400](./images/second.png)
 
 ---
+3回目の再帰呼び出し。
+continuationの結果がidに渡されmapping操作されたNodeが返る。
 
-![h:400](./images/last.png)
+```fsharp
+    | Leaf x -> 
+        Leaf(f x) |> continuation
+```
+
+![h:400](./images/third.png)
 
 ---
-
-このように継続を表す関数に「次に何をするか」を蓄積していくスタイルのことを継続渡しスタイル(CPS: Continuation Passing Style)と呼ぶ。
-これは末尾再帰になっていて、スタックには追加されない。
+# 改めて全体像
 
 ```fsharp
 let map f tree =
